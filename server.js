@@ -30,87 +30,87 @@ app.post("/address", function(req,res){
 		msgLength = opMsg.length;
 		if(msgLength > 80){
 		res.render("pages/index.ejs", {
-            outMessage: "Message must be less than 80 bytes in length"
-        });
+            		outMessage: "Message must be less than 80 bytes in length"
+        	});
 		}
 		
-            //convert pk to address
-			var address = new bitcore.PrivateKey(pkeyValue).toAddress();		
-			//create a tx
-			var privateKey = new bitcore.PrivateKey(pkeyValue);
-			
-			//get unspent from bcinfo
-			var url = "https://blockchain.info/unspent?active="+ address;
-			request({
-				url: url,
-				json: true
-			},function(error, response, body){
+            	//convert pk to address
+		var address = new bitcore.PrivateKey(pkeyValue).toAddress();		
+		//create a tx
+		var privateKey = new bitcore.PrivateKey(pkeyValue);
+		
+		//get unspent from bcinfo
+		var url = "https://blockchain.info/unspent?active="+ address;
+		request({
+			url: url,
+			json: true
+		},function(error, response, body){
                 if(!body.unspent_outputs){
                     res.render("pages/index.ejs", {
                         outMessage: "No UTXOs For This Address"
                     });
                 };
-				if(body.unspent_outputs){
-					var num = body.unspent_outputs.length;
-					var utxos = [];
-					var totalSats = 0;	
-					var txSize = 44;
+		if(body.unspent_outputs){
+			var num = body.unspent_outputs.length;
+			var utxos = [];
+			var totalSats = 0;	
+			var txSize = 44;
 						
-						for(i=0;i < num; i++){
-						var utxo = {
-							"txId": body.unspent_outputs[i].tx_hash_big_endian,
-							"outputIndex": body.unspent_outputs[i].tx_output_n,
-							"address": address,
-							"script": body.unspent_outputs[i].script,
-							"satoshis": body.unspent_outputs[i].value
-						};
-						utxos.push(utxo);
-						totalSats = totalSats + body.unspent_outputs[i].value;
-						txSize = txSize + 180;
-						};
+			for(i=0;i < num; i++){
+				var utxo = {
+				"txId": body.unspent_outputs[i].tx_hash_big_endian,
+				"outputIndex": body.unspent_outputs[i].tx_output_n,
+				"address": address,
+				"script": body.unspent_outputs[i].script,
+				"satoshis": body.unspent_outputs[i].value
+				};
+				utxos.push(utxo);
+				totalSats = totalSats + body.unspent_outputs[i].value;
+				txSize = txSize + 180;
+			};
 						
-					var fee = txSize * 20;
-					totalSats = totalSats - fee;
+			var fee = txSize * 20;
+			totalSats = totalSats - fee;
 					
-					if(totalSats < 1){
-					    res.render("pages/index.ejs", {
-                           outMessage: "This transaction can't afford the 20 satoshis per byte mining fee"
-                        });
-					} else {
+			if(totalSats < 1){
+			    	res.render("pages/index.ejs", {
+                			outMessage: "This transaction can't afford the 20 satoshis per byte mining fee"
+                        	});
+			} else {
 						
-					var transaction = new bitcore.Transaction()
-					  .from(utxos)
-					  .addData(opMsg) // Add OP_RETURN data
-					  .sign(pkeyValue);
+				var transaction = new bitcore.Transaction()
+				  .from(utxos)
+				  .addData(opMsg) // Add OP_RETURN data
+				  .sign(pkeyValue);
 									
 					
-					var txjson = transaction.toString();
-					var pload = {
-						"tx_hex": txjson
-					};
+				var txjson = transaction.toString();
+				var pload = {
+					"tx_hex": txjson
+				};
 					
-					request({
-						url: "https://chain.so/api/v2/send_tx/BTC/",
-						method: "POST",
-						json: true,
-						headers: {
-							"content-type": "application/json",
-						},
-						body: pload
+				request({
+					url: "https://chain.so/api/v2/send_tx/BTC/",
+					method: "POST",
+					json: true,
+					headers: {
+						"content-type": "application/json",
+					},
+					body: pload
 					}, function(err, response, body){
 						if(err || response.statusCode != 200){ 
 							console.log(err);
 						};
                         
-						console.log(JSON.stringify(body));
-                        completeTxId = body.data.txid;
-                        console.log("done");
-                        //display to user
-                        res.render("pages/address.ejs", {
-                            amountTx: totalSats,
-                            embedMsg: opMsg,
-                            successTxId: completeTxId
-                        });
+					console.log(JSON.stringify(body));
+                        		completeTxId = body.data.txid;
+                       			console.log("done");
+                        		//display to user
+					res.render("pages/address.ejs", {
+					    amountTx: totalSats,
+					    embedMsg: opMsg,
+					    successTxId: completeTxId
+					});
 					});
 					
 				};
@@ -122,10 +122,10 @@ app.post("/address", function(req,res){
 		} else {
 		//priv key invalid
 		res.render("pages/index.ejs", {
-            outMessage: "Invalid Private Key"
+            		outMessage: "Invalid Private Key"
         });
             
-		}
+	}
 		
 });
 
